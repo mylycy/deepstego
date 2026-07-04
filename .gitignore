@@ -1,0 +1,18 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Images (too large for git)
+images/covers/
+images/stego/
+images/whatsapp/
+images/original/
+
+# Experiments
+experiments/
+dct_explore.py
+dct_stego.py
+decode_dct.py
+analysis.py
