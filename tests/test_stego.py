@@ -1,4 +1,5 @@
 import unittest
+import os
 import numpy as np
 from PIL import Image
 from src.utils import text_to_binary, binary_to_text, hide_bit, extract_bit
@@ -7,6 +8,12 @@ from src.decode import decode
 
 TEST_COVER = "images/covers/test_cover.jpg"
 TEST_STEGO = "images/stego/test_stego.jpg"
+
+
+def create_test_dirs():
+    """Creates required directories if they don't exist."""
+    os.makedirs("images/covers", exist_ok=True)
+    os.makedirs("images/stego", exist_ok=True)
 
 
 class TestUtils(unittest.TestCase):
@@ -39,14 +46,14 @@ class TestUtils(unittest.TestCase):
 class TestEncodeDecode(unittest.TestCase):
 
     def setUp(self):
-        """Creates a synthetic test image before each test."""
+        """Creates required directories and a synthetic test image before each test."""
+        create_test_dirs()
         pixels = np.random.randint(0, 255, (600, 600, 3), dtype=np.uint8)
         img = Image.fromarray(pixels)
         img.save(TEST_COVER)
 
     def tearDown(self):
         """Removes test images after each test."""
-        import os
         for f in [TEST_COVER, TEST_STEGO]:
             if os.path.exists(f):
                 os.remove(f)
@@ -70,30 +77,29 @@ class TestEncodeDecode(unittest.TestCase):
 
 class TestValidation(unittest.TestCase):
 
-    def test_rejects_large_image(self):
-        # creates a 2000x2000 image (above 1600px threshold)
-        pixels = np.random.randint(0, 255, (2000, 2000, 3), dtype=np.uint8)
-        img = Image.fromarray(pixels)
-        img.save("images/covers/test_large.jpg")
-
-        with self.assertRaises(ValueError):
-            encode("images/covers/test_large.jpg", "Hello!", "images/stego/test.jpg")
-
-    def test_rejects_image_with_no_texture(self):
-        # creates a completely black image (no DCT coefficients)
-        pixels = np.zeros((600, 600, 3), dtype=np.uint8)
-        img = Image.fromarray(pixels)
-        img.save("images/covers/test_black.jpg")
-
-        with self.assertRaises(ValueError):
-            encode("images/covers/test_black.jpg", "Hello!", "images/stego/test.jpg")
+    def setUp(self):
+        """Creates required directories before each test."""
+        create_test_dirs()
 
     def tearDown(self):
-        import os
-        for f in ["images/covers/test_large.jpg", 
+        for f in ["images/covers/test_large.jpg",
                   "images/covers/test_black.jpg",
                   "images/stego/test.jpg"]:
             if os.path.exists(f):
                 os.remove(f)
+
+    def test_rejects_large_image(self):
+        pixels = np.random.randint(0, 255, (2000, 2000, 3), dtype=np.uint8)
+        Image.fromarray(pixels).save("images/covers/test_large.jpg")
+        with self.assertRaises(ValueError):
+            encode("images/covers/test_large.jpg", "Hello!", "images/stego/test.jpg")
+
+    def test_rejects_image_with_no_texture(self):
+        pixels = np.zeros((600, 600, 3), dtype=np.uint8)
+        Image.fromarray(pixels).save("images/covers/test_black.jpg")
+        with self.assertRaises(ValueError):
+            encode("images/covers/test_black.jpg", "Hello!", "images/stego/test.jpg")
+
+
 if __name__ == "__main__":
     unittest.main()
